@@ -56,7 +56,7 @@ export class Model{
  constructor(p=defaults){this.reset(p);}
  reset(p=defaults){
   this.p=settings(defaults,p);this.calibration=calibrateEupnea(this.p);this.active={...this.p};this.initialSettings={...this.p};this.time=0;this.volume=0;this.co2=this.p.referenceCO2;this.sensedCO2=this.p.referenceCO2;this.filteredVa=requiredVa(this.p);this.rateMeasurement=requiredVa(this.p);
-  this.ibrFraction=2/3;this.ps=clamp(12,this.p.psMin,this.p.psMax);this.initialPS=this.ps;this.history=[];this.breaths=[];this.events=[];this.eventNumber=0;this.samples=[];this.co2Buffer=[{t:0,v:this.co2}];this.nextSample=0;this.neuralPhase=1;this.effortPulse={start:-100,duration:1,amplitude:0};this.current=null;this.lastBreath=0;this.pendingTime=0;this.sample={pressure:this.p.epap,volume:0,flow:0,pmus:0};this.record();
+  this.ibrFraction=2/3;this.ps=this.p.psMin;this.initialPS=this.ps;this.history=[];this.breaths=[];this.events=[];this.eventNumber=0;this.samples=[];this.co2Buffer=[{t:0,v:this.co2}];this.nextSample=0;this.neuralPhase=1;this.effortPulse={start:-100,duration:1,amplitude:0};this.current=null;this.lastBreath=0;this.pendingTime=0;this.sample={pressure:this.p.epap,volume:0,flow:0,pmus:0};this.record();
  }
  configure(changes,label='Settings changed'){this.p=settings(this.p,changes);this.events.push({id:++this.eventNumber,t:this.time,label});}
  get backup(){return this.p.bur*(this.p.intelligent?this.ibrFraction:1);}
