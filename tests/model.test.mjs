@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Model,defaults,targets,deadspace,flowFromMotion,musclePressure,predictedBodyWeight,cycleReason,drive,patientRate,airwayPressure,requiredVa,calibrateEupnea,co2After} from '../dist/model.mjs';
+import {Model,defaults,targets,deadspace,flowFromMotion,musclePressure,predictedBodyWeight,cycleReason,drive,patientRate,airwayPressure,requiredVa,calibrateEupnea,co2After,referenceMechanics,unassistedCycle} from '../dist/model.mjs';
 import {scenarios,scenarioChange} from '../dist/scenarios.mjs';
 const near=(a,b,t=1e-6)=>assert.ok(Math.abs(a-b)<t,`${a} != ${b}`);
 const firstCycle=p=>{const m=new Model({...defaults,...p});m.step();while(m.current.endTime===null)m.advance(.005);return m;};
@@ -81,10 +81,11 @@ test('new settings preserve current breaths and state, validate atomically and r
  assert.equal(m.p.riseTime,600);m.configure(m.initialSettings);assert.equal(m.p.riseTime,150);assert.equal(m.p.triggerFlow,2);
 });
 
-test('calibration matches independent analytic periodic mechanics at different R/C and RR',()=>{
+test('reference calibration matches analytic mechanics independently of actual patient R/C',()=>{
  for(const resistance of [1,5,25])for(const compliance of [15,50,100])for(const baselineRate of [8,16,30]){
-  const p={...defaults,resistance,compliance,baselineRate},c=calibrateEupnea(p),T=60/baselineRate,Ti=Math.min(p.neuralTi,.6*T),k=1000/(compliance*resistance),w=Math.PI/Ti,A=c.amplitude;
-  const forced=t=>A/resistance*(k*Math.sin(w*t)-w*Math.cos(w*t)+w*Math.exp(-k*t))/(k*k+w*w);
+  const p={...defaults,resistance,compliance,baselineRate},c=calibrateEupnea(p),T=60/baselineRate,Ti=Math.min(p.neuralTi,.6*T),k=1000/(100*2),w=Math.PI/Ti,A=c.amplitude;
+  assert.deepEqual(c.mechanics,{compliance:100,resistance:2});
+  const forced=t=>A/2*(k*Math.sin(w*t)-w*Math.cos(w*t)+w*Math.exp(-k*t))/(k*k+w*w);
   const residual=forced(Ti)*Math.exp(-k*(T-Ti))/(1-Math.exp(-k*T));let vmin=Infinity,vmax=-Infinity;
   for(let i=0;i<=10000;i++){const t=T*i/10000,v=t<=Ti?residual*Math.exp(-k*t)+forced(t):(residual*Math.exp(-k*Ti)+forced(Ti))*Math.exp(-k*(t-Ti));vmin=Math.min(vmin,v);vmax=Math.max(vmax,v);}
   near((vmax-vmin)*1000,c.vt,.03);near(c.vt,requiredVa(p)*1000/baselineRate+deadspace(p.height));
@@ -106,4 +107,14 @@ test('VCO2, reference and required Va remain linked and invalid edits are atomic
  const m=new Model();m.configure({vco2:300});near(m.p.demand,6.47);m.configure({referenceCO2:50});near(m.p.vco2,300);near(m.p.demand,5.18);m.configure({demand:8});near(m.p.vco2,8*50/.863);
  const p=m.p;for(const changes of [{storageTau:0},{chemoDelay:61},{pmusGain:-1},{rrGain:-1},{baselineRate:0},{vco2:1100,referenceCO2:25}])assert.throws(()=>m.configure(changes));assert.equal(m.p,p);
  const c=m.calibration;m.configure(m.initialSettings);assert.equal(m.calibration,c);assert.equal(m.p.vco2,defaults.vco2);
+});
+
+ test('actual mechanics change ventilation but not reference effort, including on reset',()=>{
+ const healthy=new Model({...defaults,...referenceMechanics}),loaded=new Model({...defaults,compliance:25,resistance:10});
+ near(healthy.calibration.amplitude,loaded.calibration.amplitude);near(healthy.calibration.amplitude,5.5235,.0001);
+ const a=loaded.calibration.amplitude;loaded.configure({compliance:15,resistance:25});loaded.reset(loaded.p);near(loaded.calibration.amplitude,a);
+ const h=unassistedCycle(healthy.p,a),l=unassistedCycle(loaded.p,a);
+ near(h.expired*1000,healthy.calibration.vt,.001);assert.ok(l.expired<h.expired*.5);
+ assert.ok(flowFromMotion(0,0,-a,healthy.p)>flowFromMotion(0,0,-a,loaded.p));
+ healthy.advance(20);loaded.advance(20);assert.ok(healthy.history.length>0&&loaded.history.length>0);assert.ok(healthy.history[0].vt>loaded.history[0].vt);
 });

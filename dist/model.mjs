@@ -2,6 +2,8 @@
 export const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 export const defaults=Object.freeze({targetMode:'vt',vtTarget:500,vaTarget:5.7,height:175,ibwSex:'male',psMin:4,psMax:20,bur:15,intelligent:false,demand:5.7,vco2:264.2,referenceCO2:40,baselineRate:16,pmusGain:1,rrGain:.25,chemoDelay:5,storageTau:60,compliance:50,resistance:5,epap:5,ti:1.2,timedCycling:'fixed',tiMin:.3,tiMax:2,cyclePercent:25,riseTime:150,triggerFlow:2,neuralTi:1,speed:5,apnea:false});
 export const physiology=Object.freeze({dt:.005,maxDelay:60});
+// Fixed teaching reference for baseline effort; actual patient R/C remain independent.
+export const referenceMechanics=Object.freeze({compliance:100,resistance:2});
 export const deadspace=height=>120*Math.pow(height/175,2.363);
 // ARDSNet predicted body weight (PBW), used here as the IBW convention for VT normalization.
 export function predictedBodyWeight(height,sex){if(!['male','female'].includes(sex))throw Error('Select a male or female IBW formula.');return (sex==='male'?50:45.5)+.91*(height-152.4);}
@@ -47,7 +49,7 @@ export function unassistedCycle(p,amplitude=1){
  const residual=cycle(0).volume/(1-Math.exp(-period/(p.resistance*p.compliance/1000)));
  return {...cycle(residual),residual,period,duration};
 }
-export function calibrateEupnea(p){const unit=unassistedCycle(p),vt=requiredVa(p)/p.baselineRate+deadspace(p.height)/1000;return {amplitude:vt/unit.expired,vt:vt*1000,va:requiredVa(p),residual:unit.residual*vt/unit.expired,settings:{...p}};}
+export function calibrateEupnea(p){const unit=unassistedCycle({...p,...referenceMechanics}),vt=requiredVa(p)/p.baselineRate+deadspace(p.height)/1000;return {amplitude:vt/unit.expired,vt:vt*1000,va:requiredVa(p),residual:unit.residual*vt/unit.expired,mechanics:{...referenceMechanics},settings:{...p}};}
 export const patientRate=(sensed,p)=>clamp(p.baselineRate+p.rrGain*(sensed-p.referenceCO2),6,35);
 export function drive(sensed,p,baselineAmplitude){const amplitude=p.apnea?0:clamp(baselineAmplitude+p.pmusGain*(sensed-p.referenceCO2),0,Math.max(30,3*baselineAmplitude));return {amplitude,rate:amplitude<=.05?0:patientRate(sensed,p)};}
 // Fixed effective CO2 capacity: tau is defined at the run's initial required Va.

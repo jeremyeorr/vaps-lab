@@ -26,7 +26,7 @@ node --test tests/*.test.mjs
 - Fixed or intelligent backup rate; flow triggering, rise time and cycling; inspiratory-time limits.
 - Synchronized pressure, volume, flow and semi-sinusoidal Pmus waveforms, with timed/patient-triggered breath markers.
 - Single-compartment respiratory mechanics, CO2 mass balance, pure chemoreflex delay, and proportional Pmus and respiratory-rate responses.
-- Baseline Pmus calibrated for unassisted eupnea at the starting mechanics; calibration remains fixed during step changes.
+- Baseline Pmus calibrated for unassisted eupnea using fixed teaching-reference mechanics (C = 100 mL/cmH2O, R = 2 cmH2O/(L/s)); actual patient mechanics independently determine ventilation. Calibration remains fixed during step changes.
 - Linked metabolic VCO2, reference CO2 and required alveolar ventilation. The time constant applies to CO2 storage, with no additional controller smoothing.
 - Step-change scenarios and ventilation trends.
 
@@ -41,4 +41,4 @@ Expand **Model details & sources** in the simulator for equations, assumptions a
 - `dist/style.css`: presentation
 - `tests/`: model and UI wiring tests
 
-Snapshot of VAPS Lab model 4.0, October 15, 2026.
+VAPS Lab model 4.0; reference-mechanics calibration updated October 17, 2026.
