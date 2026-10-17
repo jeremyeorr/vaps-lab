@@ -1,6 +1,6 @@
 /* Single-compartment NIV teaching model. Coefficients are illustrative, not calibrated. */
 export const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
-export const defaults=Object.freeze({targetMode:'vt',vtTarget:500,vaTarget:5.7,height:175,ibwSex:'male',psMin:4,psMax:20,bur:15,intelligent:false,demand:5.7,vco2:264.2,referenceCO2:40,baselineRate:16,pmusGain:1,rrGain:.25,chemoDelay:5,storageTau:60,compliance:50,resistance:5,epap:5,ti:1.2,timedCycling:'fixed',tiMin:.3,tiMax:2,cyclePercent:25,riseTime:150,triggerFlow:2,neuralTi:1,speed:5,apnea:false});
+export const defaults=Object.freeze({targetMode:'vt',vtTarget:500,vaTarget:5.7,height:175,ibwSex:'male',psMin:4,psMax:20,bur:15,intelligent:false,demand:5.7,vco2:264.2,referenceCO2:40,baselineRate:16,pmusGain:1,rrGain:.25,chemoDelay:5,storageTau:60,compliance:50,resistance:5,epap:5,ti:1.2,timedCycling:'fixed',tiMin:.3,tiMax:2,cyclePercent:25,riseTime:150,triggerFlow:2,neuralTi:.8,speed:5,apnea:false});
 export const physiology=Object.freeze({dt:.005,maxDelay:60});
 // Fixed teaching reference for baseline effort; actual patient R/C remain independent.
 export const referenceMechanics=Object.freeze({compliance:100,resistance:2});

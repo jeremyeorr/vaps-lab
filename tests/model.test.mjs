@@ -8,7 +8,7 @@ test('CO2 drives rate and effort with separate gains and no direct Va response',
 test('metabolic and mechanics steps preserve calibration, phase, CO2 and effort until feedback',()=>{const m=new Model();m.advance(20);const c=m.calibration,time=m.time,co2=m.co2,phase=m.neuralPhase,pulse=m.effortPulse,drive0=m.patientDrive;m.configure({demand:7.41,resistance:15});assert.equal(m.calibration,c);assert.equal(m.time,time);assert.equal(m.co2,co2);assert.equal(m.neuralPhase,phase);assert.equal(m.effortPulse,pulse);assert.deepEqual(m.patientDrive,drive0);near(m.p.vco2,7.41*40/.863);m.reset(m.p);assert.notEqual(m.calibration.amplitude,c.amplitude);});
 test('high backup can still compete with an independent patient rhythm',()=>{const m=new Model({...defaults,bur:25});m.advance(60);assert.ok(m.breaths.some(b=>b.trigger==='timed'));assert.ok(m.breaths.some(b=>b.trigger==='spontaneous'));});
 test('default backup takes over after effort is paused',()=>{const m=new Model();m.advance(60);m.configure({apnea:true});m.advance(30);const recent=m.breaths.filter(b=>b.start>65);assert.ok(recent.length>=4);assert.ok(recent.every(b=>b.trigger==='timed'));for(let i=1;i<recent.length;i++)near(recent[i].start-recent[i-1].start,4,.006);});
-test('baseline uses resistance 5, compliance 50 and one-second Pmus effort',()=>{assert.equal(defaults.resistance,5);assert.equal(defaults.compliance,50);assert.equal(defaults.neuralTi,1);const m=new Model();m.advance(.5);assert.equal(m.effortPulse.duration,1);assert.equal(defaults.ti,1.2);});
+test('baseline uses resistance 5, compliance 50 and 0.8-second Pmus effort',()=>{assert.equal(defaults.resistance,5);assert.equal(defaults.compliance,50);assert.equal(defaults.neuralTi,.8);const m=new Model();m.advance(.5);assert.equal(m.effortPulse.duration,.8);assert.equal(defaults.ti,1.2);});
 test('percentage scenarios compound current settings, respect limits and restore precisely',()=>{
  for(const [key,first,second,start,expected,limit] of [['resistance',6.5,8.45,12,15.6,25],['compliance',35,24.5,80,56,15],['demand',7.41,9.63,6,7.8,15]]){
   const scenario=scenarios.find(s=>s.id===key),m=new Model();
@@ -111,7 +111,7 @@ test('VCO2, reference and required Va remain linked and invalid edits are atomic
 
  test('actual mechanics change ventilation but not reference effort, including on reset',()=>{
  const healthy=new Model({...defaults,...referenceMechanics}),loaded=new Model({...defaults,compliance:25,resistance:10});
- near(healthy.calibration.amplitude,loaded.calibration.amplitude);near(healthy.calibration.amplitude,5.5235,.0001);
+ near(healthy.calibration.amplitude,loaded.calibration.amplitude);near(healthy.calibration.amplitude,5.8403,.0001);
  const a=loaded.calibration.amplitude;loaded.configure({compliance:15,resistance:25});loaded.reset(loaded.p);near(loaded.calibration.amplitude,a);
  const h=unassistedCycle(healthy.p,a),l=unassistedCycle(loaded.p,a);
  near(h.expired*1000,healthy.calibration.vt,.001);assert.ok(l.expired<h.expired*.5);
